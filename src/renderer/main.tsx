@@ -1,0 +1,27 @@
+import '@astryxdesign/core/reset.css';
+import '@astryxdesign/core/astryx.css';
+import '@astryxdesign/theme-neutral/theme.css';
+import './app.css';
+
+import { StrictMode, useEffect, useState } from 'react';
+import { createRoot } from 'react-dom/client';
+
+import type { InitData } from '../shared/bridge';
+import { bridge } from './bridge';
+import { CalculatorWindow } from './CalculatorWindow';
+import { SettingsWindow } from './SettingsWindow';
+
+function Calculator() {
+  const [init, setInit] = useState<InitData | null>(null);
+  useEffect(() => {
+    void bridge.init().then(setInit);
+  }, []);
+  return init ? <CalculatorWindow init={init} /> : null;
+}
+
+const isSettings = window.location.hash === '#settings';
+document.title = isSettings ? 'QuickCalc settings' : 'QuickCalc';
+
+createRoot(document.getElementById('root') as HTMLElement).render(
+  <StrictMode>{isSettings ? <SettingsWindow /> : <Calculator />}</StrictMode>,
+);

@@ -1,0 +1,221 @@
+/*
+ * QuickCalc on Astryx. Components come from @astryxdesign/core with the neutral theme;
+ * this file only lays out the window and restores QuickCalc's blue accent and monospace
+ * calculation text. Colours are Astryx tokens, so light and dark mode follow the theme.
+ */
+
+:root,
+[data-astryx-theme] {
+  --color-accent: light-dark(#1a6dd6, #4c9aff);
+  --color-text-accent: light-dark(#1a6dd6, #4c9aff);
+  --color-icon-accent: light-dark(#1a6dd6, #4c9aff);
+  --color-border-info: light-dark(#1a6dd6, #4c9aff);
+  --color-on-accent: light-dark(#ffffff, #0b1220);
+  --qc-mono: 'Cascadia Mono', 'Cascadia Code', Consolas, 'Courier New', monospace;
+  --qc-ui: 'Segoe UI Variable Text', 'Segoe UI', var(--font-family-body);
+}
+
+html,
+body {
+  margin: 0;
+  overflow: hidden;
+  background: var(--color-background-body);
+}
+
+body {
+  font-family: var(--qc-ui);
+  font-size: 13.33px;
+  color: var(--color-text-primary);
+}
+
+/* ------------------------------------------------------------- calculator window */
+
+.qc-window {
+  box-sizing: border-box;
+  width: 406px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 6px 10px 10px;
+  background: var(--color-background-body);
+  border: 1px solid var(--color-border);
+}
+
+/* In a plain browser there is no window frame, so give the calculator a card to sit on. */
+.qc-window:not([data-electron]) {
+  margin: 24px auto;
+  border-radius: var(--radius-container);
+  box-shadow: var(--shadow-med, 0 4px 16px rgb(0 0 0 / 0.15));
+}
+
+.qc-titlebar {
+  height: 30px;
+  user-select: none;
+  -webkit-app-region: drag;
+}
+
+.qc-title {
+  flex: 1;
+  padding-inline-start: 2px;
+}
+
+.qc-titlebar-buttons {
+  display: flex;
+  gap: 2px;
+  -webkit-app-region: no-drag;
+}
+
+.qc-titlebar-buttons [aria-pressed='true'] {
+  color: var(--color-text-accent);
+}
+
+/* History */
+
+.qc-history {
+  box-sizing: border-box;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-element);
+  background: var(--color-background-surface);
+  font-family: var(--qc-mono);
+  font-size: 13.33px;
+  overflow: hidden;
+}
+
+.qc-history-rows {
+  min-height: 100%;
+}
+
+.qc-history-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  height: 24px;
+  padding: 0 8px;
+  white-space: nowrap;
+  cursor: default;
+}
+
+.qc-history-row:hover {
+  background: var(--color-overlay-hover);
+}
+
+.qc-history-expr {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: var(--color-text-secondary);
+}
+
+/* Long results lose their beginning, not their unit: elide on the left. */
+.qc-history-result {
+  flex: 0 1 auto;
+  max-width: 62%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  direction: rtl;
+  text-align: right;
+  color: var(--color-text-primary);
+}
+
+/* Input and result */
+
+.qc-input-control {
+  font-family: var(--qc-mono);
+  font-size: 18.67px;
+}
+
+.qc-input-control input {
+  font: inherit;
+}
+
+.qc-result {
+  height: 24px;
+  line-height: 24px;
+  padding: 0 3px;
+  font-family: var(--qc-mono);
+  font-size: 17.33px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.qc-result[data-state='preview'] {
+  color: var(--color-text-secondary);
+}
+
+.qc-result[data-state='result'] {
+  color: var(--color-text-primary);
+}
+
+.qc-result[data-state='error'] {
+  color: var(--color-text-error);
+  font-size: 13.33px;
+}
+
+.qc-alt {
+  height: 16px;
+  line-height: 16px;
+  margin-top: -4px;
+  padding: 0 3px;
+  font-family: var(--qc-mono);
+  font-size: 12px;
+  color: var(--color-text-secondary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Keypad */
+
+.qc-key {
+  min-height: 34px;
+  font-size: 16px;
+}
+
+.qc-key[data-role='op'] {
+  color: var(--color-text-accent);
+}
+
+.qc-key[data-role='clear'] {
+  color: var(--color-text-error);
+}
+
+/* --------------------------------------------------------------- settings */
+
+/* Wider than 480px, where FormLayout's horizontal labels would collapse to stacked. */
+.qc-settings-window {
+  box-sizing: border-box;
+  width: 540px;
+  background: var(--color-background-body);
+}
+
+.qc-settings {
+  box-sizing: border-box;
+  padding: 16px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.qc-settings-group {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.qc-settings-heading {
+  font-size: var(--font-size-sm, 14px);
+}
+
+.qc-settings-checks {
+  padding-top: 2px;
+}
+
+.qc-settings-actions {
+  padding-top: 4px;
+}
+
+.qc-warn {
+  color: var(--color-text-error);
+}

@@ -1,0 +1,64 @@
+{
+  "name": "quickcalc",
+  "productName": "QuickCalc",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Hotkey-summoned, text-first engineering calculator for Windows, built with Meta Astryx",
+  "author": "QuickCalc",
+  "license": "MIT",
+  "main": "dist-electron/main.cjs",
+  "type": "module",
+  "scripts": {
+    "dev:web": "vite",
+    "build": "vite build && node scripts/build-electron.mjs",
+    "start": "npm run build && electron .",
+    "test": "vitest run",
+    "typecheck": "tsc -p .",
+    "smoke": "npm run build && node scripts/smoke.mjs",
+    "dist": "npm run build && electron-builder --win dir",
+    "astryx": "astryx"
+  },
+  "devDependencies": {
+    "@astryxdesign/cli": "^0.7.14",
+    "@astryxdesign/core": "^0.7.14",
+    "@astryxdesign/theme-neutral": "^0.7.14",
+    "@stylexjs/stylex": "^0.19.2",
+    "@types/node": "^26.6.6",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "@vitejs/plugin-react": "^6.3.0",
+    "electron": "^45.3.1",
+    "electron-builder": "^26.18.0",
+    "esbuild": "^0.28.2",
+    "lucide-react": "^1.72.0",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1",
+    "typescript": "^7.0.2",
+    "vite": "^8.3.8",
+    "vitest": "^5.1.0"
+  },
+  "allowScripts": {
+    "esbuild@0.28.2": true
+  },
+  "build": {
+    "appId": "app.quickcalc.desktop",
+    "productName": "QuickCalc",
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "dist/**",
+      "dist-electron/**",
+      "assets/**",
+      "package.json"
+    ],
+    "asar": true,
+    "electronLanguages": [
+      "en-US"
+    ],
+    "win": {
+      "target": "dir",
+      "icon": "assets/qc.ico"
+    }
+  }
+}
