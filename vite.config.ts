@@ -16,11 +16,26 @@ function contentSecurityPolicy(): Plugin {
   };
 }
 
+// Each Astryx theme's fonts.css loads its typefaces from Google Fonts. QuickCalc bundles the
+// same faces instead (src/renderer/fonts.ts), so those files are replaced with nothing; this
+// keeps src/astryx-themes.ts exactly as `astryx theme add` generates it.
+const THEME_FONTS = /^@astryxdesign\/theme-[\w-]+\/fonts\.css$/;
+const NO_FONTS = '\0quickcalc-no-remote-fonts.css';
+
+function offlineThemeFonts(): Plugin {
+  return {
+    name: 'quickcalc-offline-theme-fonts',
+    enforce: 'pre',
+    resolveId: (id) => (THEME_FONTS.test(id) ? NO_FONTS : null),
+    load: (id) => (id === NO_FONTS ? '' : null),
+  };
+}
+
 // The renderer (calculator window and settings window). Electron loads the built files
 // from disk, so asset paths are relative.
 export default defineConfig({
   base: './',
-  plugins: [react(), contentSecurityPolicy()],
+  plugins: [offlineThemeFonts(), react(), contentSecurityPolicy()],
   build: {
     outDir: 'dist',
     emptyOutDir: true,

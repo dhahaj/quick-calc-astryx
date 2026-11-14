@@ -24,6 +24,7 @@ import {
 } from 'electron';
 
 import { parseHotkey } from '../src/shared/hotkey';
+import { colorThemeInfo } from '../src/shared/themes';
 import type { InitData, SettingsState, SystemOptions } from '../src/shared/bridge';
 import {
   type HistoryEntry,
@@ -37,6 +38,8 @@ import * as winplatform from './winplatform';
 
 const APP_NAME = 'QuickCalc';
 const CONTENT_WIDTH = 406;
+/** Wider than 480px, where Astryx's FormLayout would stack the labels above the fields. */
+const SETTINGS_WIDTH = 540;
 const args = process.argv.slice(1);
 const smokeDir = process.env.QUICKCALC_SMOKE_DIR;
 
@@ -135,8 +138,10 @@ function lockDown(win: BrowserWindow): void {
   win.webContents.session.setPermissionRequestHandler((_wc, _permission, callback) => callback(false));
 }
 
+/** The theme's page colour, shown for the moment before a window paints. */
 function background(): string {
-  return nativeTheme.shouldUseDarkColors ? '#1b1b1b' : '#f1f1f1';
+  const [light, dark] = colorThemeInfo(settings.color_theme).background;
+  return nativeTheme.shouldUseDarkColors ? dark : light;
 }
 
 function applyTheme(): void {
@@ -240,7 +245,7 @@ function openSettings(): void {
   }
   const parent = mainWindow?.isVisible() ? mainWindow : undefined;
   const win = new BrowserWindow({
-    width: 540,
+    width: SETTINGS_WIDTH,
     height: 640,
     useContentSize: true,
     show: false,
@@ -375,12 +380,13 @@ function applySubmittedSettings(submitted: Settings, system: Omit<SystemOptions,
     registerHotkey(old.hotkey);
     tray?.setToolTip(`${APP_NAME} (${old.hotkey})`);
   }
-  if (settings.theme !== old.theme) applyTheme();
+  if (settings.theme !== old.theme || settings.color_theme !== old.color_theme) applyTheme();
   mainWindow?.webContents.send('settings:changed', settings);
 
+  // The smoke test never touches the registry, whatever it submits.
   const info = launch();
-  if (system.autostart !== winplatform.autostartEnabled()) setAutostart(system.autostart);
-  if (winplatform.calculatorKeySupported(info) && system.calculatorKey !== winplatform.calculatorKeyEnabled(info)) {
+  if (!smokeDir && system.autostart !== winplatform.autostartEnabled()) setAutostart(system.autostart);
+  if (!smokeDir && winplatform.calculatorKeySupported(info) && system.calculatorKey !== winplatform.calculatorKeyEnabled(info)) {
     if (!winplatform.setCalculatorKey(system.calculatorKey, info)) {
       notify('Calculator key', "Couldn't update the Calculator key setting.", true);
     }
@@ -422,6 +428,13 @@ function registerIpc(): void {
   ipcMain.on('window:resize', (event, width: number, height: number) => {
     const win = BrowserWindow.fromWebContents(event.sender);
     if (!win || !(width > 0 && height > 0)) return;
+    if (win === settingsWindow) {
+      // Fixed width (a scrollbar must not narrow it); roomier themes make the form taller
+      // than some screens, and past that the page scrolls.
+      const area = screen.getDisplayMatching(win.getBounds()).workArea;
+      width = SETTINGS_WIDTH;
+      height = Math.min(height, area.height - 60);
+    }
     const [w, h] = win.getContentSize();
     if (w !== width || h !== height) win.setContentSize(Math.round(width), Math.round(height));
     if (win === mainWindow) resolveMainReady();

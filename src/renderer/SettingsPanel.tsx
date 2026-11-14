@@ -17,6 +17,7 @@ import { type KeyboardEvent, type ReactNode, useEffect, useState } from 'react';
 import type { SettingsState } from '../shared/bridge';
 import { hotkeyFromEvent, parseHotkey } from '../shared/hotkey';
 import { DEFAULT_HOTKEY, type Settings } from '../shared/settings';
+import { COLOR_THEMES, type ColorTheme } from '../shared/themes';
 import { bridge } from './bridge';
 
 const HINT = 'Click the box and press the new combination.';
@@ -39,7 +40,13 @@ function Group({ title, children }: { title: string; children: ReactNode }) {
   );
 }
 
-export function SettingsPanel({ onDone }: { onDone(): void }) {
+export interface SettingsPanelProps {
+  onDone(): void;
+  /** Called as the theme choices change, so the settings window can show them before OK. */
+  onPreview?(colorTheme: ColorTheme, theme: Settings['theme']): void;
+}
+
+export function SettingsPanel({ onDone, onPreview }: SettingsPanelProps) {
   const [state, setState] = useState<SettingsState | null>(null);
   const [draft, setDraft] = useState<Settings | null>(null);
   const [hotkey, setHotkey] = useState('');
@@ -57,6 +64,12 @@ export function SettingsPanel({ onDone }: { onDone(): void }) {
     });
     return () => bridge.suspendHotkey(false);
   }, []);
+
+  const previewColor = draft?.color_theme;
+  const previewMode = draft?.theme;
+  useEffect(() => {
+    if (previewColor && previewMode) onPreview?.(previewColor, previewMode);
+  }, [previewColor, previewMode, onPreview]);
 
   if (state === null || draft === null) return <div className="qc-settings" />;
 
@@ -121,6 +134,12 @@ export function SettingsPanel({ onDone }: { onDone(): void }) {
             />
             <Selector
               label="Theme"
+              value={draft.color_theme}
+              onChange={(v) => set('color_theme', v as ColorTheme)}
+              options={COLOR_THEMES.map(({ value, label, description }) => ({ value, label, description }))}
+            />
+            <Selector
+              label="Appearance"
               value={draft.theme}
               onChange={(v) => set('theme', v as Settings['theme'])}
               options={[

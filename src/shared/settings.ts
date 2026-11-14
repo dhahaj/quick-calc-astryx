@@ -6,6 +6,7 @@
  */
 
 import { type FormatMode, type FormatSettings, MODES } from '../engine/formatter';
+import { type ColorTheme, DEFAULT_COLOR_THEME, isColorTheme } from './themes';
 
 export const HISTORY_LIMIT = 500;
 export const DEFAULT_HOTKEY = 'Ctrl+Alt+C';
@@ -20,7 +21,10 @@ export interface Settings {
   /** Window offset from its screen's top-left corner. */
   last_offset: [number, number] | null;
   hide_on_focus_loss: boolean;
+  /** Light / dark mode ("Appearance" in Settings). The key name matches the original app. */
   theme: ThemeChoice;
+  /** Astryx colour theme ("Theme" in Settings). Unknown to the original app, which ignores it. */
+  color_theme: ColorTheme;
   copy_on_enter: boolean;
   show_keypad: boolean;
   show_history: boolean;
@@ -40,6 +44,7 @@ export function defaultSettings(): Settings {
     last_offset: null,
     hide_on_focus_loss: false,
     theme: 'system',
+    color_theme: DEFAULT_COLOR_THEME,
     copy_on_enter: true,
     show_keypad: false,
     show_history: true,
@@ -71,6 +76,7 @@ export function validateSettings(s: Settings): Settings {
   const out = { ...s };
   if (out.position !== 'center' && out.position !== 'last') out.position = d.position;
   if (out.theme !== 'system' && out.theme !== 'dark' && out.theme !== 'light') out.theme = d.theme;
+  if (!isColorTheme(out.color_theme)) out.color_theme = d.color_theme;
   if (out.angle_mode !== 'rad' && out.angle_mode !== 'deg') out.angle_mode = d.angle_mode;
   if (!(MODES as readonly string[]).includes(out.format_mode)) out.format_mode = d.format_mode;
   out.sig_figs = Math.max(1, Math.min(15, out.sig_figs));

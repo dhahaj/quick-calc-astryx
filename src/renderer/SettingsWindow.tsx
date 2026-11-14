@@ -1,18 +1,24 @@
 /** The separate settings window (Electron). */
 
-import { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 
 import type { ThemeChoice } from '../shared/settings';
+import { type ColorTheme, DEFAULT_COLOR_THEME } from '../shared/themes';
 import { AppTheme } from './AppTheme';
 import { bridge } from './bridge';
 import { SettingsPanel } from './SettingsPanel';
 
 export function SettingsWindow() {
-  const [theme, setTheme] = useState<ThemeChoice>('system');
+  // The window previews the theme being chosen; the calculator changes only on OK.
+  const [look, setLook] = useState<{ colorTheme: ColorTheme; theme: ThemeChoice }>({
+    colorTheme: DEFAULT_COLOR_THEME,
+    theme: 'system',
+  });
   const rootRef = useRef<HTMLDivElement>(null);
 
+  const preview = useCallback((colorTheme: ColorTheme, theme: ThemeChoice) => setLook({ colorTheme, theme }), []);
+
   useEffect(() => {
-    void bridge.getSettingsState().then((state) => setTheme(state.settings.theme));
     const onKey = (e: KeyboardEvent) => {
       // Escape cancels, like a dialog — unless a dropdown inside the form handled it.
       if (e.key === 'Escape' && !e.defaultPrevented) bridge.closeSettings();
@@ -34,9 +40,9 @@ export function SettingsWindow() {
   }, []);
 
   return (
-    <AppTheme theme={theme}>
+    <AppTheme theme={look.theme} colorTheme={look.colorTheme}>
       <div ref={rootRef} className="qc-settings-window">
-        <SettingsPanel onDone={() => bridge.closeSettings()} />
+        <SettingsPanel onDone={() => bridge.closeSettings()} onPreview={preview} />
       </div>
     </AppTheme>
   );

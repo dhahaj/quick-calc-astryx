@@ -124,6 +124,30 @@ export async function runSmokeTest(dir: string, ctx: SmokeContext): Promise<void
     await waitFor(() => ctx.getSettings() === null);
     log('settings closed with Escape');
     await delay(300);
+
+    // Every colour theme, alternating light and dark, with the keypad showing.
+    const looks: Array<[string, string]> = [
+      ['quickcalc', 'light'], ['neutral', 'dark'], ['butter', 'light'], ['chocolate', 'dark'],
+      ['gothic', 'dark'], ['matcha', 'light'], ['stone', 'dark'], ['y2k', 'light'],
+    ];
+    for (const [colorTheme, mode] of looks) {
+      await main.webContents.executeJavaScript(`(async () => {
+        const s = await window.quickcalc.getSettingsState();
+        await window.quickcalc.submitSettings(
+          {...s.settings, color_theme: '${colorTheme}', theme: '${mode}', show_keypad: true},
+          {autostart: s.autostart, calculatorKey: s.calculatorKey});
+      })()`);
+      await delay(700);
+      const attrs = await read(main, `[document.documentElement.dataset.astryxTheme, document.documentElement.dataset.qcSkin, getComputedStyle(document.querySelector('.qc-window')).fontFamily.split(',')[0]].join(' / ')`);
+      log(`theme ${colorTheme} ${mode}: ${attrs}`);
+      await shot(main, `6-${colorTheme}-${mode}.png`);
+    }
+    ctx.openSettings();
+    await waitFor(() => ctx.getSettings()?.isVisible() ?? false);
+    await delay(800);
+    await shot(ctx.getSettings(), '7-settings-y2k.png');
+    ctx.getSettings()?.close();
+    await delay(300);
     log('done');
   } catch (exc) {
     log(`error: ${(exc as Error).stack ?? String(exc)}`);

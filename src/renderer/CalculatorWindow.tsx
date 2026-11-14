@@ -282,7 +282,7 @@ export function CalculatorWindow({ init }: { init: InitData }) {
   }, []);
 
   return (
-    <AppTheme theme={settings.theme}>
+    <AppTheme theme={settings.theme} colorTheme={settings.color_theme}>
       <div ref={rootRef} className="qc-window" data-electron={isElectron || undefined}>
         <HStack vAlign="center" gap={0.5} className="qc-titlebar">
           <span className="qc-title">

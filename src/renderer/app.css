@@ -1,17 +1,22 @@
 /*
- * QuickCalc on Astryx. Components come from @astryxdesign/core with the neutral theme;
- * this file only lays out the window and restores QuickCalc's blue accent and monospace
- * calculation text. Colours are Astryx tokens, so light and dark mode follow the theme.
+ * QuickCalc on Astryx. Components come from @astryxdesign/core with the theme picked in
+ * Settings; this file only lays out the windows and keeps the calculation text monospaced.
+ * Colours are Astryx tokens, so every theme and light/dark mode carry through.
  */
 
-:root,
 [data-astryx-theme] {
+  --qc-mono: 'Cascadia Mono', 'Cascadia Code', Consolas, 'Courier New', monospace;
+  --qc-ui: var(--font-family-body);
+}
+
+/* The "QuickCalc" theme: Astryx neutral with the original app's blue accent and Segoe UI. */
+html[data-qc-skin='quickcalc'][data-astryx-theme],
+html[data-qc-skin='quickcalc'] [data-astryx-theme] {
   --color-accent: light-dark(#1a6dd6, #4c9aff);
   --color-text-accent: light-dark(#1a6dd6, #4c9aff);
   --color-icon-accent: light-dark(#1a6dd6, #4c9aff);
   --color-border-info: light-dark(#1a6dd6, #4c9aff);
   --color-on-accent: light-dark(#ffffff, #0b1220);
-  --qc-mono: 'Cascadia Mono', 'Cascadia Code', Consolas, 'Courier New', monospace;
   --qc-ui: 'Segoe UI Variable Text', 'Segoe UI', var(--font-family-body);
 }
 
@@ -22,7 +27,9 @@ body {
   background: var(--color-background-body);
 }
 
-body {
+body,
+.qc-window,
+.qc-settings-window {
   font-family: var(--qc-ui);
   font-size: 13.33px;
   color: var(--color-text-primary);
@@ -183,10 +190,17 @@ body {
 
 /* --------------------------------------------------------------- settings */
 
-/* Wider than 480px, where FormLayout's horizontal labels would collapse to stacked. */
+/* The settings window scrolls when the form is taller than the screen allows. */
+html:has(.qc-settings-window),
+html:has(.qc-settings-window) body {
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+
+/* The window is 540px wide: past 480px, where FormLayout's horizontal labels would stack. */
 .qc-settings-window {
   box-sizing: border-box;
-  width: 540px;
+  width: 100%;
   background: var(--color-background-body);
 }
 
