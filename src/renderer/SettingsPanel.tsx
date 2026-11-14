@@ -44,9 +44,11 @@ export interface SettingsPanelProps {
   onDone(): void;
   /** Called as the theme choices change, so the settings window can show them before OK. */
   onPreview?(colorTheme: ColorTheme, theme: Settings['theme']): void;
+  /** Called once the current settings have loaded and the form is showing. */
+  onLoaded?(): void;
 }
 
-export function SettingsPanel({ onDone, onPreview }: SettingsPanelProps) {
+export function SettingsPanel({ onDone, onPreview, onLoaded }: SettingsPanelProps) {
   const [state, setState] = useState<SettingsState | null>(null);
   const [draft, setDraft] = useState<Settings | null>(null);
   const [hotkey, setHotkey] = useState('');
@@ -70,6 +72,11 @@ export function SettingsPanel({ onDone, onPreview }: SettingsPanelProps) {
   useEffect(() => {
     if (previewColor && previewMode) onPreview?.(previewColor, previewMode);
   }, [previewColor, previewMode, onPreview]);
+
+  const isLoaded = state !== null;
+  useEffect(() => {
+    if (isLoaded) onLoaded?.();
+  }, [isLoaded, onLoaded]);
 
   if (state === null || draft === null) return <div className="qc-settings" />;
 

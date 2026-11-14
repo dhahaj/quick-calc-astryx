@@ -10,7 +10,7 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 
-import { type BrowserWindow, clipboard } from 'electron';
+import { type BrowserWindow, clipboard, screen } from 'electron';
 
 export interface SmokeContext {
   mainReady: Promise<void>;
@@ -54,6 +54,13 @@ export async function runSmokeTest(dir: string, ctx: SmokeContext): Promise<void
     log(`screenshot ${name} ${w}x${h}`);
   };
   const read = (win: BrowserWindow, js: string) => win.webContents.executeJavaScript(js) as Promise<string>;
+  /** Whether the whole window sits inside its screen's work area. */
+  const logPlacement = (win: BrowserWindow, when: string) => {
+    const b = win.getBounds();
+    const a = screen.getDisplayMatching(b).workArea;
+    const inside = b.x >= a.x && b.y >= a.y && b.x + b.width <= a.x + a.width && b.y + b.height <= a.y + a.height;
+    log(`placement ${when}: ${b.width}x${b.height} at ${b.x},${b.y} in work area ${a.width}x${a.height} at ${a.x},${a.y}: ${inside ? 'fully on screen' : 'OFF SCREEN'}`);
+  };
   const resultLine = (win: BrowserWindow) => read(win, `document.querySelector('.qc-result')?.textContent ?? ''`);
 
   const savedClipboard = await clipboard.readText();
@@ -106,9 +113,11 @@ export async function runSmokeTest(dir: string, ctx: SmokeContext): Promise<void
 
     ctx.openSettings();
     await waitFor(() => ctx.getSettings()?.isVisible() ?? false);
-    await delay(800);
     const settings = ctx.getSettings();
     if (!settings) throw new Error('no settings window');
+    logPlacement(settings, 'when shown');
+    await delay(800);
+    logPlacement(settings, 'settled');
     await shot(settings, '5-settings.png');
     log(`settings title: ${settings.getTitle()}`);
 
@@ -144,7 +153,9 @@ export async function runSmokeTest(dir: string, ctx: SmokeContext): Promise<void
     }
     ctx.openSettings();
     await waitFor(() => ctx.getSettings()?.isVisible() ?? false);
+    logPlacement(ctx.getSettings() as BrowserWindow, 'Y2K when shown');
     await delay(800);
+    logPlacement(ctx.getSettings() as BrowserWindow, 'Y2K settled');
     await shot(ctx.getSettings(), '7-settings-y2k.png');
     ctx.getSettings()?.close();
     await delay(300);

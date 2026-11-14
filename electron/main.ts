@@ -34,6 +34,7 @@ import {
   validateSettings,
 } from '../src/shared/settings';
 import * as config from './config';
+import { fitOnScreen } from './placement';
 import * as winplatform from './winplatform';
 
 const APP_NAME = 'QuickCalc';
@@ -270,6 +271,43 @@ function openSettings(): void {
   });
 }
 
+/** Gap kept between the settings window and the edges of the screen. */
+const SCREEN_MARGIN = 16;
+
+/** The screen the settings window opens on: the calculator's, else the one under the mouse. */
+function settingsWorkArea(win: BrowserWindow): Electron.Rectangle {
+  if (win.isVisible()) return screen.getDisplayMatching(win.getBounds()).workArea;
+  if (mainWindow?.isVisible()) return screen.getDisplayMatching(mainWindow.getBounds()).workArea;
+  return screen.getDisplayNearestPoint(screen.getCursorScreenPoint()).workArea;
+}
+
+/**
+ * Size the settings window to its content and keep all of it on screen. The first call
+ * comes once the form has loaded, so the window opens centred at its real size; later
+ * calls (a roomier theme being previewed) move it only as far as needed to stay visible.
+ */
+function sizeSettings(win: BrowserWindow, contentHeight: number): void {
+  const opening = !win.isVisible();
+  const bounds = win.getBounds();
+  const content = win.getContentBounds();
+  // The title bar and borders count too; past the screen's height the form scrolls.
+  const fit = fitOnScreen({
+    area: settingsWorkArea(win),
+    bounds,
+    frame: { width: bounds.width - content.width, height: bounds.height - content.height },
+    contentWidth: SETTINGS_WIDTH,
+    contentHeight,
+    margin: SCREEN_MARGIN,
+    center: opening,
+  });
+  if (content.width !== SETTINGS_WIDTH || content.height !== fit.contentHeight) {
+    win.setContentSize(SETTINGS_WIDTH, fit.contentHeight);
+  }
+  const moved = win.getBounds();
+  if (moved.x !== fit.x || moved.y !== fit.y) win.setPosition(fit.x, fit.y);
+  if (opening) win.show();
+}
+
 // ------------------------------------------------------------------------ hotkey
 
 function registerHotkey(text: string): boolean {
@@ -429,19 +467,12 @@ function registerIpc(): void {
     const win = BrowserWindow.fromWebContents(event.sender);
     if (!win || !(width > 0 && height > 0)) return;
     if (win === settingsWindow) {
-      // Fixed width (a scrollbar must not narrow it); roomier themes make the form taller
-      // than some screens, and past that the page scrolls.
-      const area = screen.getDisplayMatching(win.getBounds()).workArea;
-      width = SETTINGS_WIDTH;
-      height = Math.min(height, area.height - 60);
+      sizeSettings(win, height);
+      return;
     }
     const [w, h] = win.getContentSize();
     if (w !== width || h !== height) win.setContentSize(Math.round(width), Math.round(height));
     if (win === mainWindow) resolveMainReady();
-    if (win === settingsWindow && !win.isVisible()) {
-      win.center();
-      win.show();
-    }
   });
 
   ipcMain.on('settings:open', openSettings);
