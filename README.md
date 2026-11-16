@@ -59,6 +59,10 @@ folder, and optionally delete `%APPDATA%\QuickCalc`.
 If "Start with Windows" was on for a copy that has since been moved or deleted (including
 the original QuickCalc), running the new `QuickCalc.exe` once points the startup entry at it.
 
+Releases are built the same way on GitHub Actions (`.github/workflows/release.yml`): bump
+`version` in `package.json`, commit, and push a matching tag such as `v1.2.3`. The workflow
+runs the tests and publishes `QuickCalc-1.2.3-win-x64.zip` on the Releases page.
+
 ## Using it
 
 | Key | Action |
