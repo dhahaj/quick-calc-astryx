@@ -5,6 +5,8 @@
  */
 
 import { execFileSync } from 'node:child_process';
+import * as fs from 'node:fs';
+import * as path from 'node:path';
 
 export const RUN_KEY = 'HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Run';
 export const RUN_VALUE = 'QuickCalc';
@@ -61,13 +63,41 @@ export function deleteKey(key: string): boolean {
 
 // ---------------------------------------------------------------- start with Windows
 
-export function autostartEnabled(): boolean {
-  return readValue(RUN_KEY, RUN_VALUE) !== null;
+/** True when a Run entry starts this copy of QuickCalc in the tray. */
+export function isOwnAutostart(command: string | null, info: LaunchInfo): boolean {
+  return command !== null && command.trim().toLowerCase() === launchCommand(info, '--tray').toLowerCase();
+}
+
+/** The program a Run entry starts: the quoted first token, else everything up to ".exe". */
+export function autostartProgram(command: string): string | null {
+  const m = /^"([^"]+)"/.exec(command.trim()) ?? /^(.*?\.exe)(?=\s|$)/i.exec(command.trim());
+  return m ? m[1] : null;
+}
+
+/**
+ * True when the entry belongs to a copy that no longer exists: the original QuickCalc after
+ * it was uninstalled (both use the same value name), or this one after its folder moved.
+ * Such an entry starts nothing at sign-in. A program path that can't be checked (relative,
+ * or with %VARIABLES%) never counts as gone.
+ */
+export function isStaleAutostart(command: string | null, info: LaunchInfo, exists: (file: string) => boolean): boolean {
+  if (command === null || isOwnAutostart(command, info)) return false;
+  const program = autostartProgram(command);
+  return program !== null && path.win32.isAbsolute(program) && !exists(program);
+}
+
+export function autostartEnabled(info: LaunchInfo): boolean {
+  return isOwnAutostart(readValue(RUN_KEY, RUN_VALUE), info);
 }
 
 /** Add or remove the HKCU Run entry. Returns true on success. */
 export function setAutostart(enabled: boolean, info: LaunchInfo): boolean {
   return enabled ? writeValue(RUN_KEY, RUN_VALUE, launchCommand(info, '--tray')) : deleteValue(RUN_KEY, RUN_VALUE);
+}
+
+/** Point a stale entry at this copy, so a "Start with Windows" that was on stays on. */
+export function repairAutostart(info: LaunchInfo): boolean {
+  return isStaleAutostart(readValue(RUN_KEY, RUN_VALUE), info, fs.existsSync) && setAutostart(true, info);
 }
 
 // ------------------------------------------------------------------- calculator key

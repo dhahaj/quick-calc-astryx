@@ -105,6 +105,8 @@ function start(): void {
   createMainWindow(icon);
   registerIpc();
   if (!smokeDir) registerHotkeyOrNotify();
+  // Only the built exe: from source the entry would tie sign-in to a dev checkout.
+  if (!smokeDir && app.isPackaged) winplatform.repairAutostart(launch());
 
   if (smokeDir) {
     void import('./smoke').then(({ runSmokeTest }) =>
@@ -364,7 +366,7 @@ function trayMenu(): Menu {
     {
       label: 'Start with Windows',
       type: 'checkbox',
-      checked: winplatform.autostartEnabled(),
+      checked: winplatform.autostartEnabled(launch()),
       click: (item) => setAutostart(item.checked),
     },
     { type: 'separator' },
@@ -423,7 +425,7 @@ function applySubmittedSettings(submitted: Settings, system: Omit<SystemOptions,
 
   // The smoke test never touches the registry, whatever it submits.
   const info = launch();
-  if (!smokeDir && system.autostart !== winplatform.autostartEnabled()) setAutostart(system.autostart);
+  if (!smokeDir && system.autostart !== winplatform.autostartEnabled(info)) setAutostart(system.autostart);
   if (!smokeDir && winplatform.calculatorKeySupported(info) && system.calculatorKey !== winplatform.calculatorKeyEnabled(info)) {
     if (!winplatform.setCalculatorKey(system.calculatorKey, info)) {
       notify('Calculator key', "Couldn't update the Calculator key setting.", true);
@@ -484,7 +486,7 @@ function registerIpc(): void {
     const info = launch();
     return {
       settings,
-      autostart: winplatform.autostartEnabled(),
+      autostart: winplatform.autostartEnabled(info),
       calculatorKey: winplatform.calculatorKeyEnabled(info),
       calculatorKeySupported: winplatform.calculatorKeySupported(info),
     };

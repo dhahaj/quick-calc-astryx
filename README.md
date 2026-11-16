@@ -56,6 +56,9 @@ This produces `release\win-unpacked\` with `QuickCalc.exe`. Copy that folder any
 your user profile and run `QuickCalc.exe`. To remove it: quit from the tray, delete the
 folder, and optionally delete `%APPDATA%\QuickCalc`.
 
+If "Start with Windows" was on for a copy that has since been moved or deleted (including
+the original QuickCalc), running the new `QuickCalc.exe` once points the startup entry at it.
+
 ## Using it
 
 | Key | Action |
